@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playlist style map</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A7%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#EEF1F4;--ink:#1A2230;--muted:#586374;--line:#D3DAE2;--tile-off:#D5DBE3;--panel:#FFFFFF;--focus:#2149C4;--shadow:rgba(26,34,48,.16);
+  --display:"Syne","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --tile:15px;--gap:3px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){color-scheme:dark;--bg:#12161C;--ink:#E8ECF2;--muted:#99A4B3;--line:#2A323D;--tile-off:#2A323D;--panel:#1A2028;--focus:#8AA5F0;--shadow:rgba(0,0,0,.45)}
+}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#12161C;--ink:#E8ECF2;--muted:#99A4B3;--line:#2A323D;--tile-off:#2A323D;--panel:#1A2028;--focus:#8AA5F0;--shadow:rgba(0,0,0,.45)}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.5 var(--body);overflow-x:hidden}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+[hidden]{display:none !important}
+
+.page{max-width:1240px;margin:0 auto;padding:clamp(18px,3vw,36px) clamp(16px,4vw,40px) 96px}
+body.has-tray .page{padding-bottom:250px}
+body.dragging::after{content:"Drop an .xlsx file to preview it";position:fixed;inset:12px;border:2px dashed var(--ink);border-radius:14px;background:color-mix(in srgb,var(--bg) 88%,transparent);display:grid;place-items:center;font:700 1.4rem var(--display);z-index:50;pointer-events:none}
+
+/* source bar */
+.srcbar{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center;margin-bottom:26px;color:var(--muted);font-size:.86rem}
+.srcbar .acts{display:flex;gap:8px}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:22px 40px;justify-content:space-between;align-items:flex-end}
+h1{font:800 clamp(2.6rem,7.4vw,5.2rem)/.94 var(--display);letter-spacing:-.03em;margin:0}
+.lede{max-width:54ch;color:var(--muted);margin:16px 0 0;font-size:1.06rem}
+.seg{display:inline-flex;gap:2px;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
+.seg button{border:0;background:transparent;padding:8px 18px;border-radius:999px;font-weight:600;font-size:.92rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg-wrap{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.9rem}
+
+.notice{margin:26px 0 0;padding:12px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.notice p{margin:0;max-width:80ch}
+
+/* spectrum */
+.spectrum{display:flex;gap:7px;height:58px;margin-top:36px}
+.fgroup{display:flex;gap:2px;min-width:0}
+.sseg{flex:1 1 0;min-width:3px;border:0;padding:0;background:var(--c);border-radius:2px;transition:opacity .18s}
+.spectrum.filtering .sseg{opacity:.22}
+.spectrum.filtering .sseg.match{opacity:1}
+.fleg{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:12px}
+.fitem{display:inline-flex;align-items:center;gap:8px;border:1px solid transparent;background:transparent;border-radius:999px;padding:5px 12px 5px 8px;font-size:.92rem}
+.fitem:hover{border-color:var(--line)}
+.fitem[aria-pressed="true"]{border-color:var(--ink)}
+.fitem em{font-style:normal;color:var(--muted)}
+.fsw{width:12px;height:12px;border-radius:3px;background:var(--c)}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:26px 36px;margin-top:38px;padding-top:26px;border-top:1px solid var(--line)}
+.m b{display:block;font:700 clamp(2rem,4.4vw,3rem)/1 var(--display);letter-spacing:-.02em}
+.m span{display:block;margin-top:8px;color:var(--muted);font-size:.92rem;max-width:26ch}
+.insight{max-width:72ch;margin:26px 0 0}
+
+/* wall */
+h2{font:700 clamp(1.4rem,2.6vw,1.9rem)/1.15 var(--display);letter-spacing:-.01em;margin:0}
+.wallsec{margin-top:64px}
+.key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:10px 0 18px;color:var(--muted);font-size:.9rem}
+.key span{display:inline-flex;align-items:center;gap:8px}
+.key i{display:block;width:13px;height:13px;border-radius:3px}
+.key .solid{background:var(--ink)}
+.key .hollow{box-shadow:inset 0 0 0 2px var(--ink)}
+.frow{display:grid;grid-template-columns:190px minmax(0,1fr);gap:16px 28px;padding:24px 0;border-top:1px solid var(--line)}
+.fhead h3{font:700 1.2rem/1.2 var(--display);margin:0}
+.fhead p{margin:5px 0 0;color:var(--muted);font-size:.9rem}
+.clusters{display:flex;flex-wrap:wrap;gap:24px 32px;align-items:flex-start}
+.cluster{display:flex;flex-direction:column;align-items:flex-start;gap:9px;transition:opacity .2s}
+.wall.filtering .cluster{opacity:.2}
+.wall.filtering .cluster.match{opacity:1}
+.clabel{border:0;background:transparent;padding:0;text-align:left;font-weight:600;font-size:.86rem;line-height:1.25;max-width:11.5rem}
+.clabel span{color:var(--muted);font-weight:500;margin-left:4px}
+.clabel:hover{text-decoration:underline;text-underline-offset:3px}
+.tiles{display:grid;grid-template-columns:repeat(var(--cols),var(--tile));gap:var(--gap)}
+.tile{display:block;width:var(--tile);height:var(--tile);border-radius:3px;background:var(--tile-off);cursor:pointer;
+  transition:background-color .6s ease var(--d,0ms),box-shadow .6s ease var(--d,0ms)}
+.wall.on .tile{background:var(--c)}
+.wall.on .tile.guess{background:transparent;box-shadow:inset 0 0 0 2px var(--c)}
+.tile:hover{outline:2px solid var(--ink);outline-offset:1px}
+
+/* explorer */
+.explorer{margin-top:56px;scroll-margin-top:20px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.filters input,.filters select{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:9px 12px;min-width:0}
+.filters input{flex:1 1 220px;max-width:340px}
+.count{margin:14px 0 0;color:var(--muted);font-size:.9rem}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th{text-align:left;font-weight:600;border-bottom:1px solid var(--line);padding:0;white-space:nowrap}
+th button{width:100%;text-align:left;border:0;background:transparent;padding:11px 14px;font-weight:600}
+th button:hover{background:var(--bg)}
+td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.num{color:var(--muted);font-variant-numeric:tabular-nums;width:1%}
+td.ttl,td.art{max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.art{max-width:220px}
+td.sty,td.cert{white-space:nowrap}
+.sw{display:inline-block;width:11px;height:11px;border-radius:3px;background:var(--c);margin-right:8px;vertical-align:-1px}
+.sw.guess{background:transparent;box-shadow:inset 0 0 0 2px var(--c)}
+.empty{padding:28px 16px;color:var(--muted)}
+.more{margin-top:14px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:9px 15px;font-weight:600;font-size:.92rem}
+.btn.sm{padding:6px 12px;font-size:.84rem}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* about */
+.about{margin-top:64px;padding-top:28px;border-top:1px solid var(--line)}
+.about .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 36px;margin-top:16px;color:var(--muted)}
+.about p{margin:0}
+
+/* gate (no data yet) */
+.gate{max-width:640px;margin:14vh auto 0;padding:0 4px}
+.gate h1{font-size:clamp(2rem,5vw,3.2rem)}
+.gate p{color:var(--muted);margin:16px 0}
+.gate code{font:500 .9em ui-monospace,Menlo,Consolas,monospace;background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+
+/* tray */
+.tray{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(1180px,calc(100% - 24px));z-index:20;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 10px 34px var(--shadow);
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px 20px;align-items:center}
+.tsw{width:44px;height:44px;border-radius:6px;background:var(--c)}
+.tray h3{font:700 1.2rem/1.2 var(--display);margin:0}
+.tray p{margin:3px 0 0;color:var(--muted);font-size:.9rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:.82rem}
+.chip b{font-weight:600;margin-left:4px;color:var(--muted)}
+.tact{display:flex;gap:8px}
+
+/* tooltip */
+.tip{position:fixed;z-index:30;pointer-events:none;max-width:290px;background:var(--ink);color:var(--bg);padding:10px 12px;border-radius:8px;font-size:.85rem;line-height:1.35;box-shadow:0 6px 20px var(--shadow);overflow-wrap:anywhere}
+.tip .tm{opacity:.72}
+.tip .tl{display:flex;align-items:center;gap:7px;margin-top:6px}
+.tip .tl i{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);flex:none}
+
+@media (max-width:900px){
+  .frow{grid-template-columns:minmax(0,1fr)}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .about .cols{grid-template-columns:minmax(0,1fr)}
+  .tray{grid-template-columns:auto minmax(0,1fr)}
+  .tact{grid-column:1 / -1}
+  body.has-tray .page{padding-bottom:330px}
+}
+@media (max-width:640px){
+  :root{--tile:13px;--gap:3px}
+  .hide-s{display:none !important}
+  .spectrum{height:44px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tile,.cluster,.sseg{transition:none !important}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="srcbar">
+    <span id="status" role="status" aria-live="polite">Loading the playlist…</span>
+    <span class="acts">
+      <button type="button" class="btn sm" id="reload">Reload</button>
+      <button type="button" class="btn sm" id="openFile">Open an Excel file</button>
+      <input type="file" id="fileIn" accept=".xlsx,.xlsm,.xls,.csv" hidden>
+    </span>
+  </div>
+
+  <section class="gate" id="gate" hidden>
+    <h1 id="gateH">Playlist style map</h1>
+    <p id="gateMsg"></p>
+    <button type="button" class="btn primary" id="gateOpen">Open an Excel file</button>
+  </section>
+
+  <main id="app" hidden>
+    <header class="top">
+      <div>
+        <h1 id="h1">Playlist style map</h1>
+        <p class="lede" id="lede"></p>
+      </div>
+      <div class="seg-wrap">
+        <span id="countby">Count by</span>
+        <div class="seg" role="group" aria-labelledby="countby">
+          <button type="button" data-unit="tracks" aria-pressed="true">Tracks</button>
+          <button type="button" data-unit="artists" aria-pressed="false">Artists</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="notice" id="notice" hidden>
+      <p id="noticeTxt"></p>
+      <button type="button" class="btn sm" id="noticeBtn" hidden>Show them</button>
+    </div>
+
+    <section aria-label="Share of the playlist by style">
+      <div class="spectrum" id="spectrum"></div>
+      <div class="fleg" id="fleg"></div>
+    </section>
+
+    <section class="metrics" id="metrics" aria-label="Diversity measures"></section>
+    <p class="insight" id="insight"></p>
+
+    <section class="wallsec">
+      <h2 id="wallh">Every track, grouped by style</h2>
+      <p class="key"><span><i class="solid"></i>Confident or likely</span><span><i class="hollow"></i>Best guess</span></p>
+      <div class="wall" id="wall" role="group" aria-label="Playlist grouped by style"></div>
+    </section>
+
+    <section class="explorer" id="explorer">
+      <h2>Browse the tracks</h2>
+      <div class="filters">
+        <input type="search" id="q" placeholder="Search title, artist or album" aria-label="Search tracks">
+        <select id="fFam" aria-label="Family"></select>
+        <select id="fSty" aria-label="Style"></select>
+        <select id="fVer" aria-label="Version"></select>
+        <select id="fConf" aria-label="Certainty"></select>
+      </div>
+      <p class="count" id="count" aria-live="polite"></p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr id="thead"></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="more" id="more"></div>
+    </section>
+
+    <section class="about">
+      <h2>How this page works</h2>
+      <div class="cols">
+        <p id="ab1"></p>
+        <p id="ab2"></p>
+        <p id="ab3"></p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<aside class="tray" id="tray" hidden aria-live="polite">
+  <span class="tsw" id="tsw"></span>
+  <div>
+    <h3 id="tname"></h3>
+    <p id="tdesc"></p>
+    <p id="tstats"></p>
+    <div class="chips" id="tchips"></div>
+  </div>
+  <div class="tact">
+    <button type="button" class="btn primary" id="tgo">See these tracks</button>
+    <button type="button" class="btn" id="tclear">Clear</button>
+  </div>
+</aside>
+<div class="tip" id="tip" hidden role="tooltip"></div>
+
+<script src="vendor/xlsx.mini.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ================= configuration ================= */
+var params = new URLSearchParams(location.search);
+var DATA_FILE = params.get('file') || 'playlist.xlsx';          // the Excel file, next to this page
+var POLL_MS = Math.max(2, +params.get('poll') || 45) * 1000;     // how often to check for a new version
+
+/* Built-in styles and what is already known about the artists (used only when a row has no Style). */
+var BUILTIN = [{"code":"PR","name":"Pop rock & emo","fam":"Rock & alternative","desc":"Guitar-led pop with big choruses and teenage-angst lyrics, in German and English.","l":"#C8243A","d":"#E5566A"},{"code":"PK","name":"Punk & hardcore","fam":"Rock & alternative","desc":"Fast, loud guitar music, from pop-punk to melodic hardcore.","l":"#8E1B2E","d":"#C4485D"},{"code":"IN","name":"Indie & psychedelic","fam":"Rock & alternative","desc":"Indie rock, shoegaze, folk-tinged indie pop and psychedelic pop.","l":"#E4695A","d":"#F08A7C"},{"code":"PO","name":"Pop","fam":"Pop","desc":"Mainstream pop with radio-sized hooks, including pop-R&B crossovers.","l":"#D66FB8","d":"#E28AC9"},{"code":"DP","name":"Dance-pop & electropop","fam":"Pop","desc":"Pop built on club beats and synth hooks.","l":"#F29AC9","d":"#F4A9D2"},{"code":"SP","name":"Synth-pop & new wave","fam":"Pop","desc":"Synth and guitar pop from the 80s onward, plus its descendants like J-pop technopop.","l":"#9B4DA6","d":"#B975C4"},{"code":"HY","name":"Hyperpop & digicore","fam":"Pop","desc":"Distorted, pitch-shifted internet pop: scene-core dance, digicore and hyperpop.","l":"#E0187F","d":"#FF4DA6"},{"code":"TR","name":"Trap & US rap","fam":"Hip-hop & R&B","desc":"Trap beats and American rap.","l":"#E39A1F","d":"#F0B444"},{"code":"RB","name":"R&B","fam":"Hip-hop & R&B","desc":"Smooth and alternative R&B, plus dancehall-tinged crossovers.","l":"#B8721A","d":"#D9963F"},{"code":"DE","name":"Deutschrap & German pop-rap","fam":"Hip-hop & R&B","desc":"German-language rap, from party rave-rap to political hip-hop.","l":"#F2C230","d":"#F5D057"},{"code":"RU","name":"Russian rap & pop","fam":"Hip-hop & R&B","desc":"Russian-language rap, pop-rap and trap.","l":"#D9531E","d":"#F07A48"},{"code":"IR","name":"International rap","fam":"Hip-hop & R&B","desc":"Rap from the UK, Poland, Korea, Iran and France.","l":"#8A5A2B","d":"#B98552"},{"code":"PH","name":"Phonk","fam":"Electronic","desc":"Drift phonk: cowbells, distorted 808s and dark, sped-up or slowed edits.","l":"#2149C4","d":"#5B80F2"},{"code":"BF","name":"Brazilian funk & montagem","fam":"Electronic","desc":"Funk automotivo, montagem and other Brazilian baile-funk styles.","l":"#0E9F8E","d":"#2CC9B6"},{"code":"HE","name":"House & EDM","fam":"Electronic","desc":"House, progressive house and festival dance music.","l":"#39A0E3","d":"#5DB9F0"},{"code":"ED","name":"Eurodance & Europop","fam":"Electronic","desc":"1990s and 2000s Eurodance and its heirs.","l":"#86D3EE","d":"#9BDDF3"},{"code":"TE","name":"Techno & hard dance","fam":"Electronic","desc":"Hardstyle, schranz, tekkno and other high-BPM club music.","l":"#182A78","d":"#4C61C9"},{"code":"ND","name":"Nu-disco & funk","fam":"Electronic","desc":"Disco-funk revivalism and synth-funk.","l":"#6C8BE8","d":"#8AA5F0"},{"code":"BA","name":"Baroque","fam":"Classical","desc":"Vivaldi and Pachelbel, 17th and 18th century.","l":"#A5C46B","d":"#B8D583"},{"code":"CL","name":"Classical era","fam":"Classical","desc":"Mozart, late 18th century.","l":"#5FA05B","d":"#7DBB79"},{"code":"RO","name":"Romantic & later","fam":"Classical","desc":"19th and early 20th century orchestral, ballet, opera and piano music.","l":"#2D7A4B","d":"#4FA870"},{"code":"LA","name":"Latin","fam":"World & soundtrack","desc":"Bachata, Spanish trap and neoperreo.","l":"#8E5BD9","d":"#A97FE8"},{"code":"WF","name":"World & fusion","fam":"World & soundtrack","desc":"Arabic pop, raï and Balkan groove.","l":"#B48EF0","d":"#C6A8F5"},{"code":"SO","name":"Soundtrack & piano","fam":"World & soundtrack","desc":"Video-game score and anime piano covers.","l":"#6D6A99","d":"#9491BF"}];
+var KB = {"tracks":{"a bird's last look||macabre plaza":"HY:2","a new kind of love (demo)||guy sigsworth, imogen heap & frou frou":"SP:0","addiction||lonown & asenssia":"PH:2","all the things she said||harrison":"DP:2","all the things she said||t.a.t.u.":"DP:1","altyn||framed":"PH:1","altyn (slowed + reverb)||borrenfam":"PH:1","amena||ikkimel & barré":"DE:0","angel||gerxmvp":"PH:2","articuno (feat. albany)||yung beef":"LA:1","aufwachen blaumachen||vicky":"DE:2","aura||ogryzek":"PH:1","automotivo atividade transcedendal 1.0||dj twoz, mc gw & mc lckaiique":"BF:0","automotivo bibi fogosa||bibi babydoll, dj brunin xm & kza produções":"BF:0","automotivo da sequência intercelestial 4.0||dj twoz & mc delux":"BF:0","bad bitch molly addict||d3r, pr0xy & jakubshaggy":"HY:2","balkangroover||kubabuba":"WF:1","barbie boy||dj dreckisch, ennoia & tido":"TE:2","bauch beine po||shirin david":"DE:0","be my lover||la bouche":"ED:0","behind these hazel eyes||bounce projectz":"TE:2","berghain||rosalía, björk & yves tumor":"PO:1","berliner arroganz||drunken masters & ikkimel":"DE:0","bikini grell||ikkimel & robbensohn":"DE:0","blinded (feat. bethany) [radio edit]||lucas & steve":"HE:0","boom, boom, boom, boom!!||vengaboys":"ED:0","breakin' dishes||rihanna":"DP:1","broken trust||say3am & staarz":"PH:2","bye bitch!||interworld":"PH:1","bye bye||ménélik":"IR:1","call it what you like||robbie doherty":"HE:2","calling (lose my mind) [radio edit] [feat. ryan tedder]||sebastian ingrosso & alesso":"HE:0","casual||chappell roan":"PO:0","catharsis||kuko & tokio hotel":"DP:2","club classics||charli xcx":"DP:1","come down||gleemer":"IN:0","constant repeat||yaego":"PH:2","crimson dawn||leftoz":"PH:1","cry for me||the weeknd":"RB:1","daisies||justin bieber":"PO:1","dat phonk||kordhell":"PH:0","day n nite (feat. pixel hood)||kets4eki, syris & nosgov":"HY:0","death penalty (sped up)||heyakimbo":"PH:2","decimation||eyez hate u & yvetzal":"PH:2","deep end||interworld & siiickbrain":"PH:1","delulu||nesya":"HY:2","der letzte tag (single version)||tokio hotel":"PR:0","destination||vøj, the scandalous playaz & trvnsporter":"PH:2","disturbia (hardstyle)||sick legend":"TE:0","divine||blair muir":"HE:2","dna||lxngvx & visxge":"PH:1","do i clench my fists?||ridgeclub":"HY:2","dogs unleashed||tokio hotel":"PR:0","don't do it||yvncc":"HY:2","dopamin high||zsá zsá":"DE:2","dota (radio edit)||basshunter":"ED:0","down (feat. lil wayne)||jay sean":"PO:1","down on you (bonus track)||tokio hotel":"PR:0","dracula (with jennie)||tame impala":"IN:0","drowning love - chasing kou||penguin piano":"SO:1","drums (record dance edit)||sonic mine & heater & crunch":"TE:2","durch den monsun (radio mix)||tokio hotel":"PR:0","ecstacy||suicidal-idol":"HY:0","ecstacy (slowed)||suicidal-idol":"HY:0","electro world||perfume":"SP:0","every breath you take (remastered 2003)||the police":"SP:1","every day||eric prydz":"HE:0","every pill||kets4eki, asteria & pedro":"HY:0","everytime we fvck (remix)||tanboymiguel, cult shφtta & lovv66":"HY:2","excused||lowx":"PH:2","ey mieze||mieze":"DE:2","facesitting||ikkimel":"DE:0","fallen||interworld & the scandalous playaz":"PH:1","fame is a gun||addison rae":"PO:1","faster n harder||6arelyhuman":"HY:0","femininomenon||chappell roan":"PO:0","fight for this love||cheryl":"DP:0","first kiss||gerxmvp":"PH:2","flare||hensonn":"PH:2","flashbacks||umbasa":"PH:2","fluxxwave||clovis reyes":"PH:1","fluxxwave (slowed + reverb)||clovis reyes":"PH:1","freak show||punkinloveee & h3artcrush":"HY:1","friesenjung||ski aggu, joost & otto waalkes":"DE:0","funk universo (super slowed)||irokz":"BF:1","fλshion||britney manson":"HY:1","gecko (overdrive) [radio edit]||oliver heldens & becky hill":"HE:0","gegen meinen willen||tokio hotel":"PR:0","geile zeit||juli":"PR:0","general release||mike klubnika":"TR:2","gfuelinme||capoxxo":"TR:2","ghost!||phonk.me & kiixshi":"PH:0","giftmord||ikkimel & barré":"DE:0","gigachad theme (phonk house version)||g3ox_em":"PH:0","girl like me||pinkpantheress":"DP:1","give it to me||henrik":"HE:2","good loyal thots||odetari":"HY:1","good luck, babe!||chappell roan":"PO:0","gottasadae||bewhy":"IR:0","grill u gawrona||białas & lanek":"IR:0","✻h+3+яд✻7lucjio0t6...||vyrval":"PH:2","half in red||grommet":"PH:2","hands up!||6arelyhuman, kets4eki & pixel hood":"HY:0","haza (alt ver)||udiennx":"PH:2","headlock||imogen heap":"SP:0","hear the sound||franck":"HE:2","heatseeker||$werve, ethan ross & cairo!":"TR:2","hesychia||lxngvx":"PH:1","hide (cs01 version)||dorian concept":"ND:2","higher||suicidal-idol, syris & pixel hood":"HY:0","hikari||clovis reyes & vdycd":"PH:1","holiday||green day":"PK:0","hot to go!||chappell roan":"PO:0","hurricanes and suns (bonustrack)||tokio hotel":"PR:0","i could be the one (avicii vs. nicky romero) [radio edit]||avicii & nicky romero":"HE:0","i don't care||violent vira":"HY:2","i like the way you kiss me||artemas":"DP:1","i like when you fuck me well||paywall":"HY:2","i'll believe in anything||wolf parade":"IN:0","i'll do it (sped up version)||heidi montag":"DP:0","#icanteven (feat. french montana)||the neighbourhood":"IN:1","ich bin nicht ich||tokio hotel":"PR:0","ich brech aus||tokio hotel":"PR:0","ich kenn das auch||myles & cíntia sofia":"PO:2","idgaf||ikkimel":"DE:0","idk bettr..||5v":"HY:2","immaculate||visxge":"PH:1","in your way||gleemer":"IN:0","insomnia||mike candys & jack holiday":"HE:0","introspective||isolate.exe, ka$tro & $egments":"PH:2","it's a dream (feat. lil uzi vert)||snow strippers":"HY:1","join me (lightforce club mix)||lightforce":"TE:1","join me (schranz rework)||lightforce & ksn":"TE:0","just the way you are||milky":"ED:1","just your doll||snow strippers":"HY:1","kahoot!||fxrr":"PH:1","keke||6ix9ine, fetty wap & a boogie wit da hoodie":"TR:0","keta und krawall||ikkimel & barré":"DE:0","ketamine||siouxxie sixxsta":"HY:1","key to my heart||bovski":"HE:2","kink||ikkimel, barré & florida juicy":"DE:0","kitty phonk||soviss":"PH:0","kokosnuss||ikkimel":"DE:0","kordeity||sillicium":"PH:2","last all night (koala) [feat. kstewart]||oliver heldens":"HE:0","legacy||pixy":"PH:2","let him go||denon reed & cru2":"PH:2","let's get paid!||kets4eki & wasty":"HY:1","level7 (demo)||osaka":"PH:2","lo0k - slowed||anor":"PH:2","lonely tekkno (sped up)||tekkno":"TE:2","lonewolf||convolk":"PH:2","loser||tame impala":"IN:0","lost memory||vøj & narvent":"PH:1","lost soul||nbsplv":"PH:1","love is wicked||brick & lace":"RB:1","love potions (feat. princess paparazzi)||bj lips":"HY:1","loveeeeeee song (feat. future)||rihanna":"RB:0","ma tnsani (yalla habibi) [feat. aya]||vanco":"WF:1","mahal||glass beams":"IN:0","mami||ikkimel & the cratez":"DE:0","memorizing 2||dj delacroix, oxxed & !nfnx":"PH:2","memory lane||tokio hotel":"PR:0","memory reboot||vøj & narvent":"PH:1","menace||fxrr":"PH:1","metamorphosis (sped up)||interworld":"PH:1","metamorphosis 2||interworld":"PH:1","metamorphosis 3||interworld, zxcursed & sadfriendd":"PH:1","miss it (at all)||niklas dee & tokio hotel":"DP:1","miss universe||tommy cash & ikkimel":"DE:1","miss you||southstar":"DP:2","mistake||overgrown":"HY:2","money longer||lil uzi vert":"TR:0","money on the dash (sped up)||elley duhé & whethan":"DP:1","monsoon||tokio hotel":"PR:0","montagem alquimia||h6itam, n7san7os & mc menor do alvorada":"BF:0","montagem bounce||rushex, yaqup duran & montagem":"BF:1","montagem mysterious game||lxngvx":"BF:1","moonlight (kali uchis) [sped up version]||sped up viral & kali uchis":"RB:1","move your body (raizhell remix)||öwnboss & sevek":"HE:2","mtg vai demonio||scxr soul, aquvrius & mc morena":"BF:0","murder in my mind (sped up)||kordhell":"PH:0","murder plot||kordhell":"PH:0","murder plot (sped up)||kordhell":"PH:0","my love (feat. major lazer, wizkid & dua lipa)||wale":"PO:1","my moon my man||feist":"IN:0","nein schatz||miss bashful, ski aggu & gda":"DE:0","neoperreo (feat. alic3e)||secret society":"LA:0","nightcrawler (instrumental)||fam0uz":"PH:1","nightmare (sped up)||plenka":"PH:2","nostalgia||plenka":"PH:2","not today||ikkimel, florida juicy & nocashfromparents":"DE:0","numb (feat. eminem)||rihanna":"PO:1","odysee||scarf!":"HY:2","omg (feat. 6arelyhuman)||suicidal-idol":"HY:0","on dat bxtch!||lumi athena & masonn deforest":"HY:1","or nah (feat. the weeknd, wiz khalifa and dj mustard) [remix]||ty dolla $ign":"RB:0","pain of love (live)||tokio hotel":"PR:0","paint the town blue (from the series arcane league of legends)||ashnikko, arcane & league of legends music":"HY:1","parent issues||jaegershu & двузер":"PH:2","party addict||kets4eki, nosgov & kojo":"HY:0","passionate highs||snow strippers":"HY:1","plaques!||808dash!":"HY:2","poker face||lady gaga":"DP:0","popstar||instasamka":"RU:1","popstar||kill eva":"HY:1","pour it up||rihanna":"TR:1","prada||cassö, raye & d-block europe":"DP:1","pretty scene girl!||clover!":"HY:1","prince of darkness||shadxwbxrn, archez & kxnvra":"PH:1","promantic (feat. ronin & pröz)||suicidal-idol":"HY:0","protection charm||miguel angeles":"PH:2","psycho dreams (sped up)||kill eva & encassator":"PH:2","psycho theme||rushex & bemax":"PH:1","pyramids||frank ocean":"RB:0","queen st||twentythree":"HY:2","rapture (sped up)||interworld":"PH:1","rasenschach||filow":"DE:1","ravestar||watchmedieslowly & pröz":"HY:2","ready, set, go!||tokio hotel":"PR:0","recall||gabriawll":"PH:2","rechazame||prince royce":"LA:0","recognize (feat. drake)||partynextdoor":"RB:0","reden||tokio hotel":"PR:0","replay||iyaz":"PO:1","rmb (ring my bell)||aitch":"IR:1","rosalía||t-fest":"RU:1","safe in your skin||title fight":"PK:1","scatterbrain||kxllswxtch":"PH:1","schere||ikkimel":"DE:0","schrei (2006)||tokio hotel":"PR:0","screamin' (bonus track)||tokio hotel":"PR:0","sea of problems||glichery":"PH:2","search||scarlet house":"PH:2","see u||zetuv":"PH:2","see you||kriz van dee & natt pl":"HE:2","sex appeal||sexy sushi":"SP:2","shadow||onimxru & smithmane":"PH:1","she wnna (feat. kaneda7)||suicidal-idol":"HY:0","she wolf||shakira":"DP:0","she’s gone, dance on||disclosure":"HE:0","shine dreams||nueki & tolchonov":"PH:2","shoota (feat. lil uzi vert)||playboi carti":"TR:0","siamo tutti||disarstar":"DE:1","since u been gone||kelly clarkson":"PR:0","sleepwalker||akiaura, lonown & stm":"PH:2","slowing down||scarlet house":"PH:2","so what if i'm a freak||snow strippers":"HY:1","soaked||shy smith":"HE:2","sobri (notre destin) [radio edit]||rai'n'b fever":"WF:0","somethin' here||terrence parker":"HE:1","sonic mine (remix)||benny":"TE:2","sonnensystem||tokio hotel":"PR:0","speed||fxrr":"PH:1","spit in my face!||thxsomch":"HY:2","spring nicht||tokio hotel":"PR:0","starry eyed (sped up)||baby jane":"DP:2","stateside (with zara larsson)||pinkpantheress":"DP:1","stereo love||edward maya & vika jigulina":"ED:0","stich in's glück||tokio hotel":"PR:0","stupidisco (radio edit)||junior jack":"HE:0","suga suga (feat. frankie j)||baby bash":"RB:1","sugar (feat. wynter)||flo rida":"DP:1","suicide year (raizhell remix)||weedmane, suicideyear & raizhell":"PH:1","superior||fxrr & fyex":"PH:1","süßer||mieze":"DE:2","tabestoon kootahe||zedbazi":"IR:1","take it off||kesha":"DP:0","take on me||a-ha":"SP:0","the days (notion remix)||chrystal & notion":"HE:1","the feeling (2022 remaster)||massano":"HE:1","the girl is mine (feat. destiny's child & brandy)||99 souls":"HE:1","the hills||the weeknd":"RB:0","the less i know the better||tame impala":"IN:0","the lost soul down (speed up)||nbsplv":"PH:1","the world i’m searching for||jersey":"HE:2","these words||badger & natasha bedingfield":"HE:1","tokyo killer||southwestplaya & hxtta":"PH:2","totgeliebt||tokio hotel":"PR:0","touch||manliketwin":"PH:2","transgender||poltergst, police in paris & staarz":"PH:2","tricky disco||gøthbøybaby":"HY:2","tricky disco (single edit)||discotronic":"ED:1","trust you again (feat. eden martin) [edit]||muttonheads":"HE:0","try me (feat. techna)||suicidal-idol":"HY:0","turn back p3||xxanteria":"PH:2","übers ende der welt (single version)||tokio hotel":"PR:0","under your spell||snow strippers":"HY:1","une vie à t'aimer||lorien testard, alice duport-percier & victor borba":"SO:0","unplugged 2: love kills (feat. white punk)||pharaoh":"RU:1","unwritten||natasha bedingfield":"PO:0","vendetta! (sped up)||mupp & sadfriendd":"PH:1","virus (how about now) [radio edit]||martin garrix & moti":"HE:0","voicemail||kuko":"DP:2","von dutch||charli xcx":"DP:1","#voyuitwaaien (super slowed -pitch)||latex fruit":"HY:2","wanderhure||ikkimel":"DE:0","waste||kxllswxtch":"PH:1","waste (sped up version)||kxllswxtch":"PH:1","wazira / وزيرة||saint levant":"WF:1","we on go||bia":"TR:0","where am i supposed to go?||ridgeclub":"HY:2","whine up||skeptic":"PH:2","who's that||ikkimel & robbensohn":"DE:0","wish you were mine||philip george":"HE:0","wo sind eure hände||tokio hotel":"PR:0","you & i||dabeull & holybrune":"ND:1","you are my high||demon":"ND:1","you're gonna go far, kid||the offspring":"PK:0","your love is my drug||xxtristanxo":"HY:1","yum yum||lxngvx & mc gw":"BF:1","ворую алкоголь||эвсэ & floki":"RU:1","восхитительно||face":"RU:0","давай сконнектимся||t-fest":"RU:0","друзья||face":"RU:0","как дела||t-fest":"RU:0","как мне быть||эвсэ & floki":"RU:1","лабиринт||face":"RU:0","люби меня||cmh & рома жёлудь":"RU:1","мечты||aarne, feduk & scally milano":"RU:0","мультибрендовый (feat. 104 & t-fest)||scriptonite":"RU:0","нервы||нервы":"PR:1","никого не ебет||t-fest":"RU:0","оп давай давай||police in paris, gorilla glue & lil nakur":"RU:1","права||ooes":"RU:2","розовое вино||элджей & feduk":"RU:0","светлана!||nextime":"RU:1","снова я напиваюсь||slava marlow":"RU:0","счастье||нервы":"PR:1","тает лёд||грибы":"RU:1","тесно||aarne, bushido zho & anikv":"RU:0","факт||face":"RU:0","2bipolar||jnhygs & cw":"HY:2","365||charli xcx":"DP:1","1000 oceans||tokio hotel":"PR:0","2000||vowl. & sace":"HY:2","2006 (feat. angelmane)||suicidal-idol":"HY:0","danse macabre, op. 40||philharmonia orchestra & charles dutoit":"RO:0","romeo and juliet, op. 64, act i: xiii. dance of the knights||boston symphony orchestra & seiji ozawa":"RO:0","symphonie no. 40 in g minor, k. 550: i. molto allegro||orchestre philharmonique de londres & alfred scholtz":"CL:0","serenade for strings||antonín dvořák":"RO:0","symphony no. 9 in e minor, op. 95 \"from the new world\": iv. allegro con fuoco (excerpt)||berliner philharmoniker & rafael kubelik":"RO:0","canon en ré majeur||laurence equilbey & concerto köln":"BA:0","lacrimosa||vienna mozart orchestra":"CL:0","swan lake, op. 20, act 2: no. 10, moderato||andré previn & london symphony orchestra":"RO:0","the four seasons: violin concerto in g minor, rv 315, \"l'estate\": iii. presto||michel schwalbé, eberhard finke, horst gobel, berliner philharmoniker & herbert von karajan":"BA:0","the four seasons: violin concerto in f minor, rv 297, \"l'inverno\": i. allegro non molto||michel schwalbé, eberhard finke, horst gobel, berliner philharmoniker & herbert von karajan":"BA:0","brahms: hungarian dance no. 5 in g minor - orchestrated by a. parlow (?-1888)||gewandhausorchester & kurt masur":"RO:0","carmen: prelude. allegro giocoso – andante moderato (fate motive)||london symphony orchestra & claudio abbado":"RO:0","nocturne no. 20 in c-sharp minor, op. posth.||mikhail pletnev":"RO:0","peer gynt suite no. 1, op. 46: i. morning mood||jeffrey tate & berliner philharmoniker":"RO:0","symphonie n°9 en mi mineur, b. 178, op. 95 \"du nouveau monde\" : iv. allegro con fuoco||slovak philharmonic orchestra & kurt redel":"RO:0","carmen: ouverture||french national radio orchestra & sir thomas beecham":"RO:0","carmen - suite no. 1: les dragons de alcala||slovak philharmonic orchestra & anthony bramall":"RO:0","pas de deux||mariinsky orchestra & valery gergiev":"RO:0","nutcracker suite, op. 71a: waltz of the flowers||berliner philharmoniker & herbert von karajan":"RO:0","leb die sekunde||tokio hotel":"PR:0","rette mich (video version)||tokio hotel":"PR:0","freunde bleiben||tokio hotel":"PR:0","wenn nichts mehr geht||tokio hotel":"PR:0","laß uns hier raus||tokio hotel":"PR:0","jung und nicht mehr jugendfrei||tokio hotel":"PR:0","unendlichkeit||tokio hotel":"PR:0","beichte||tokio hotel":"PR:0","schwarz||tokio hotel":"PR:0","thema, nr. 1 (demo 2003)||tokio hotel":"PR:0","heilig||tokio hotel":"PR:0","nach dir kommt nichts||tokio hotel":"PR:0","wir sterben niemals aus||tokio hotel":"PR:0","vergessene kinder||tokio hotel":"PR:0","an deiner seite (ich bin da)||tokio hotel":"PR:0","scream||tokio hotel":"PR:0","love is dead||tokio hotel":"PR:0","don't jump||tokio hotel":"PR:0","on the edge||tokio hotel":"PR:0","sacred||tokio hotel":"PR:0","break away||tokio hotel":"PR:0","rescue me||tokio hotel":"PR:0","final day||tokio hotel":"PR:0","forgotten children||tokio hotel":"PR:0","by your side||tokio hotel":"PR:0","komm||tokio hotel":"PR:0","automatisch||tokio hotel":"PR:0","lass uns laufen||tokio hotel":"PR:0","humanoid (english version)||tokio hotel":"PR:0","für immer jetzt||tokio hotel":"PR:0","kampf der liebe||tokio hotel":"PR:0","hunde||tokio hotel":"PR:0","menschen suchen menschen||tokio hotel":"PR:0","alien (english version)||tokio hotel":"PR:0","geisterfahrer||tokio hotel":"PR:0","zoom||tokio hotel":"PR:0","träumer (bonus track)||tokio hotel":"PR:0","hey du (bonus track)||tokio hotel":"PR:0","that day (english version) [bonus track]||tokio hotel":"PR:0","attention (bonus track)||tokio hotel":"PR:0","noise||tokio hotel":"PR:0","darkside of the sun||tokio hotel":"PR:0","automatic||tokio hotel":"PR:0","world behind my wall||tokio hotel":"PR:0","forever now||tokio hotel":"PR:0","pain of love||tokio hotel":"PR:0","human connect to human||tokio hotel":"PR:0","phantomrider||tokio hotel":"PR:0","zoom into me||tokio hotel":"PR:0","love & death (bonus track)||tokio hotel":"PR:0","hey you (bonus track)||tokio hotel":"PR:0","fata morgana||nina chuba & tokio hotel":"PO:1","mädchen aus dem all (2003)||tokio hotel":"PR:0","1000 meere||tokio hotel":"PR:0","darkside of the sun (live)||tokio hotel":"PR:0"},"artists":{"macabre plaza":"HY:2","guy sigsworth":"SP:1","lonown":"PH:2","harrison":"DP:2","t.a.t.u.":"DP:1","framed":"PH:1","borrenfam":"PH:1","ikkimel":"DE:1","gerxmvp":"PH:2","yung beef":"LA:1","vicky":"DE:2","ogryzek":"PH:1","dj twoz":"BF:1","bibi babydoll":"BF:1","d3r":"HY:2","kubabuba":"WF:1","dj dreckisch":"TE:2","shirin david":"DE:1","la bouche":"ED:1","bounce projectz":"TE:2","rosalía":"PO:1","drunken masters":"DE:1","lucas & steve":"HE:1","vengaboys":"ED:1","rihanna":"DP:1","say3am":"PH:2","interworld":"PH:1","ménélik":"IR:1","robbie doherty":"HE:2","sebastian ingrosso":"HE:1","chappell roan":"PO:1","kuko":"DP:2","charli xcx":"DP:1","gleemer":"IN:1","yaego":"PH:2","leftoz":"PH:1","the weeknd":"RB:1","justin bieber":"PO:1","kordhell":"PH:1","kets4eki":"HY:1","heyakimbo":"PH:2","eyez hate u":"PH:2","nesya":"HY:2","tokio hotel":"PR:1","vøj":"PH:1","sick legend":"TE:1","blair muir":"HE:2","lxngvx":"PH:1","ridgeclub":"HY:2","yvncc":"HY:2","zsá zsá":"DE:2","basshunter":"ED:1","jay sean":"PO:1","tame impala":"IN:1","penguin piano":"SO:1","sonic mine":"TE:2","suicidal-idol":"HY:1","perfume":"SP:1","the police":"SP:1","eric prydz":"HE:1","tanboymiguel":"HY:2","lowx":"PH:2","mieze":"DE:2","addison rae":"PO:1","6arelyhuman":"HY:1","cheryl":"DP:1","hensonn":"PH:2","umbasa":"PH:2","clovis reyes":"PH:1","punkinloveee":"HY:1","ski aggu":"DE:1","irokz":"BF:1","britney manson":"HY:1","oliver heldens":"HE:1","juli":"PR:1","mike klubnika":"TR:2","capoxxo":"TR:2","phonk.me":"PH:1","g3ox_em":"PH:1","pinkpantheress":"DP:1","henrik":"HE:2","odetari":"HY:1","bewhy":"IR:1","białas":"IR:1","vyrval":"PH:2","grommet":"PH:2","udiennx":"PH:2","imogen heap":"SP:1","franck":"HE:2","$werve":"TR:2","dorian concept":"ND:2","green day":"PK:1","avicii":"HE:1","violent vira":"HY:2","artemas":"DP:1","paywall":"HY:2","wolf parade":"IN:1","heidi montag":"DP:1","the neighbourhood":"IN:1","myles":"PO:2","5v":"HY:2","visxge":"PH:1","mike candys":"HE:1","isolate.exe":"PH:2","snow strippers":"HY:1","lightforce":"TE:1","milky":"ED:1","fxrr":"PH:1","6ix9ine":"TR:1","siouxxie sixxsta":"HY:1","bovski":"HE:2","soviss":"PH:1","sillicium":"PH:2","pixy":"PH:2","denon reed":"PH:2","osaka":"PH:2","anor":"PH:2","tekkno":"TE:2","convolk":"PH:2","nbsplv":"PH:1","brick & lace":"RB:1","bj lips":"HY:1","vanco":"WF:1","glass beams":"IN:1","dj delacroix":"PH:2","niklas dee":"DP:1","tommy cash":"DE:1","southstar":"DP:2","overgrown":"HY:2","lil uzi vert":"TR:1","elley duhé":"DP:1","h6itam":"BF:1","rushex":"BF:1","sped up viral":"RB:1","öwnboss":"HE:2","scxr soul":"BF:1","wale":"PO:1","feist":"IN:1","miss bashful":"DE:1","secret society":"LA:1","fam0uz":"PH:1","plenka":"PH:2","scarf!":"HY:2","lumi athena":"HY:1","ty dolla $ign":"RB:1","ashnikko":"HY:1","jaegershu":"PH:2","808dash!":"HY:2","lady gaga":"DP:1","instasamka":"RU:1","kill eva":"HY:1","cassö":"DP:1","clover!":"HY:1","shadxwbxrn":"PH:1","miguel angeles":"PH:2","frank ocean":"RB:1","twentythree":"HY:2","filow":"DE:1","watchmedieslowly":"HY:2","gabriawll":"PH:2","prince royce":"LA:1","partynextdoor":"RB:1","iyaz":"PO:1","aitch":"IR:1","t-fest":"RU:1","title fight":"PK:1","kxllswxtch":"PH:1","glichery":"PH:2","scarlet house":"PH:2","zetuv":"PH:2","kriz van dee":"HE:2","sexy sushi":"SP:2","onimxru":"PH:1","shakira":"DP:1","disclosure":"HE:1","nueki":"PH:2","playboi carti":"TR:1","disarstar":"DE:1","kelly clarkson":"PR:1","akiaura":"PH:2","shy smith":"HE:2","rai'n'b fever":"WF:1","terrence parker":"HE:1","benny":"TE:2","thxsomch":"HY:2","baby jane":"DP:2","edward maya":"ED:1","junior jack":"HE:1","baby bash":"RB:1","flo rida":"DP:1","weedmane":"PH:1","zedbazi":"IR:1","kesha":"DP:1","a-ha":"SP:1","chrystal":"HE:1","massano":"HE:1","99 souls":"HE:1","jersey":"HE:2","badger":"HE:1","southwestplaya":"PH:2","manliketwin":"PH:2","poltergst":"PH:2","gøthbøybaby":"HY:2","discotronic":"ED:1","muttonheads":"HE:1","xxanteria":"PH:2","lorien testard":"SO:1","pharaoh":"RU:1","natasha bedingfield":"PO:1","mupp":"PH:1","martin garrix":"HE:1","latex fruit":"HY:2","saint levant":"WF:1","bia":"TR:1","skeptic":"PH:2","philip george":"HE:1","dabeull":"ND:1","demon":"ND:1","the offspring":"PK:1","xxtristanxo":"HY:1","эвсэ":"RU:1","face":"RU:1","cmh":"RU:1","aarne":"RU:1","scriptonite":"RU:1","нервы":"PR:1","police in paris":"RU:1","ooes":"RU:2","элджей":"RU:1","nextime":"RU:1","slava marlow":"RU:1","грибы":"RU:1","jnhygs":"HY:2","vowl.":"HY:2","philharmonia orchestra":"RO:1","boston symphony orchestra":"RO:1","orchestre philharmonique de londres":"CL:1","antonín dvořák":"RO:1","berliner philharmoniker":"RO:1","laurence equilbey":"BA:1","vienna mozart orchestra":"CL:1","andré previn":"RO:1","michel schwalbé":"BA:1","gewandhausorchester":"RO:1","london symphony orchestra":"RO:1","mikhail pletnev":"RO:1","jeffrey tate":"RO:1","slovak philharmonic orchestra":"RO:1","french national radio orchestra":"RO:1","mariinsky orchestra":"RO:1","nina chuba":"PO:1"}};
+
+var CONF = ['Confident','Likely','Best guess','Unclassified'];
+var VERS = ['Original','Radio edit','Remix','Sped up','Slowed','Live','Demo'];
+var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var BY_CODE = {}; BUILTIN.forEach(function(b){BY_CODE[b.code] = b;});
+
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function pct(n,d){return d?Math.round(n/d*100):0;}
+function pctS(n,d){var p = pct(n,d); return (n>0 && p===0) ? '&lt;1' : String(p);}
+function norm(s){return String(s).normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim();}
+var KEEP = ['Brick & Lace','Lucas & Steve'];
+function primary(a){
+  for(var i=0;i<KEEP.length;i++) if(a.indexOf(KEEP[i])===0) return KEEP[i];
+  return a.split(/,\s*|\s+&\s+/)[0].trim();
+}
+function version(t){
+  var tl = t.toLowerCase();
+  if(/sped up|speed up/.test(tl)) return 'Sped up';
+  if(tl.indexOf('slowed')>-1) return 'Slowed';
+  if(/\blive\b/.test(tl)) return 'Live';
+  if(tl.indexOf('demo')>-1) return 'Demo';
+  if(/remix|rework|club mix|record dance edit|\(hardstyle\)|phonk house version/.test(tl)) return 'Remix';
+  if(/radio edit|radio mix|single edit|single version|\[edit\]|\(edit\)/.test(tl)) return 'Radio edit';
+  return 'Original';
+}
+function parseCert(v){
+  v = norm(v);
+  if(/^(confident|certain|high)/.test(v)) return 0;
+  if(/^(likely|medium)/.test(v)) return 1;
+  if(/guess|^low/.test(v)) return 2;
+  return null;
+}
+function lighten(hex){
+  var m = /^#?([0-9a-f]{6})$/i.exec(hex); if(!m) return hex;
+  var n = parseInt(m[1],16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  function mix(c){return Math.round(c+(255-c)*0.3);}
+  return '#'+[mix(r),mix(g),mix(b)].map(function(c){return ('0'+c.toString(16)).slice(-2);}).join('');
+}
+function cleanHex(v){
+  v = String(v||'').trim(); if(/^[0-9a-f]{6}$/i.test(v)) v = '#'+v;
+  if(/^#[0-9a-f]{3}$/i.test(v)) v = '#'+v[1]+v[1]+v[2]+v[2]+v[3]+v[3];
+  return /^#[0-9a-f]{6}$/i.test(v) ? v : '';
+}
+
+/* ================= reading the workbook ================= */
+var ALIASES = {title:['title','track','song','name','titre'], artist:['artist','artists','artiste'], album:['album'], style:['style','genre'], cert:['certainty','confidence']};
+var SALIASES = {name:['style','name'], fam:['family'], desc:['description'], color:['color','colour']};
+function mapHeader(row, aliases){
+  var m = {};
+  row.forEach(function(c,i){
+    var v = String(c).trim().toLowerCase().replace(/\s*\(.*$/,'');
+    Object.keys(aliases).forEach(function(k){ if(m[k]===undefined && aliases[k].indexOf(v)>-1) m[k]=i; });
+  });
+  return m;
+}
+function sheetRows(ws){return XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});}
+function findSheet(wb, name){
+  for(var i=0;i<wb.SheetNames.length;i++) if(wb.SheetNames[i].trim().toLowerCase()===name) return wb.Sheets[wb.SheetNames[i]];
+  return null;
+}
+function parseWorkbook(wb){
+  var ws = findSheet(wb,'tracks');
+  if(!ws){
+    for(var i=0;i<wb.SheetNames.length;i++){ if(wb.SheetNames[i].trim().toLowerCase()!=='styles'){ ws = wb.Sheets[wb.SheetNames[i]]; break; } }
+  }
+  if(!ws) throw new Error('The workbook has no sheet with tracks.');
+  var rows = sheetRows(ws), m = rows.length ? mapHeader(rows[0], ALIASES) : {}, body;
+  if(Object.keys(m).length>=2){
+    if(m.title===undefined || m.artist===undefined) throw new Error('The header row needs Title and Artist columns.');
+    body = rows.slice(1);
+  } else { m = {title:0, artist:1, album:2, style:3, cert:4}; body = rows; }
+  function get(r,k){return m[k]===undefined ? '' : String(r[m[k]]===undefined?'':r[m[k]]).trim();}
+  var out = [];
+  body.forEach(function(r){
+    var t = get(r,'title'), a = get(r,'artist');
+    if(!t && !a) return;
+    out.push({title:t, artist:a, album:get(r,'album'), style:get(r,'style'), cert:get(r,'cert')});
+  });
+  var styleRows = [], sws = findSheet(wb,'styles');
+  if(sws){
+    var sr = sheetRows(sws), sm = sr.length ? mapHeader(sr[0], SALIASES) : {}, sb;
+    if(Object.keys(sm).length>=1 && sm.name!==undefined) sb = sr.slice(1); else { sm = {name:0, fam:1, desc:2, color:3}; sb = sr; }
+    sb.forEach(function(r){
+      var g = function(k){return sm[k]===undefined ? '' : String(r[sm[k]]===undefined?'':r[sm[k]]).trim();};
+      if(g('name')) styleRows.push({name:g('name'), fam:g('fam'), desc:g('desc'), color:cleanHex(g('color'))});
+    });
+  }
+  return {rows:out, styleRows:styleRows};
+}
+
+/* ================= model ================= */
+var styles=[], fams=[], tracks=[], trackUnits=[], artistUnits=[], byArtist={}, countsT=[], countsA=[], cur=[], U=-1, meta={};
+var state = {unit:'tracks', style:null, fam:null, q:'', ver:'all', conf:'all', sortKey:null, sortDir:1, shown:60};
+
+function lookup(t,a,al){
+  function mk(code, src, swap){var p=code.split(':'); return {name:BY_CODE[p[0]].name, c:src==='artist'?Math.max(1,+p[1]):+p[1], src:src, swap:swap};}
+  var h = KB.tracks[norm(t)+'||'+norm(a)];
+  if(h) return mk(h,'track',false);
+  h = al ? KB.tracks[norm(t)+'||'+norm(al)] : null;          // artist and album columns swapped
+  if(h) return mk(h,'track',true);
+  h = KB.artists[norm(primary(a))];
+  if(h) return mk(h,'artist',false);
+  return null;
+}
+
+function ingest(parsed){
+  var reg = {}, order = [], customN = 0;
+  function add(o){reg[o.name.toLowerCase()] = o; order.push(o); return o;}
+  function autoColor(o){
+    if(o.l) return;
+    var h = (20 + customN*137.5) % 360; customN++;
+    o.l = 'hsl('+h.toFixed(0)+' 62% 44%)'; o.d = 'hsl('+h.toFixed(0)+' 68% 62%)';
+  }
+  BUILTIN.forEach(function(b){add({name:b.name, famName:b.fam, desc:b.desc, l:b.l, d:b.d});});
+  parsed.styleRows.forEach(function(r){
+    var s = reg[r.name.toLowerCase()];
+    if(s){ if(r.fam) s.famName = r.fam; if(r.desc) s.desc = r.desc; if(r.color){s.l = r.color; s.d = lighten(r.color);} }
+    else add({name:r.name, famName:r.fam||'Other', desc:r.desc||'', l:r.color||null, d:r.color?lighten(r.color):null});
+  });
+  var unc = {name:'Unclassified', famName:'Unclassified', desc:'No style is set in the file and the artist is not known yet.', l:'#9AA3AF', d:'#6B7482'};
+  var raw = [];
+  parsed.rows.forEach(function(r,idx){
+    var a = r.artist, al = r.album, sty = null, src = 'none', c = 3, sw = false;
+    if(r.style){
+      sty = reg[r.style.toLowerCase()] || add({name:r.style, famName:'Other', desc:'', l:null, d:null});
+      src = 'sheet'; var pc = parseCert(r.cert); c = pc===null ? 0 : pc;
+    } else {
+      var h = lookup(r.title, a, al);
+      if(h){ sty = reg[h.name.toLowerCase()]; src = h.src; c = h.c; if(h.swap){var x=a; a=al; al=x; sw=true;} }
+    }
+    raw.push({i:idx, t:r.title, a:a, al:al, p:primary(a)||'(unknown artist)', sty:sty||unc, c:c, v:version(r.title), src:src, sw:sw});
+  });
+  order.forEach(autoColor);
+  order.push(unc);
+
+  // family order: built-in families first, then any new ones, then Unclassified
+  var famNames = [];
+  function famIdx(n){var i = famNames.indexOf(n); if(i<0){famNames.push(n); i = famNames.length-1;} return i;}
+  BUILTIN.forEach(function(b){famIdx(b.fam);});
+  order.forEach(function(s){ if(s.famName!=='Unclassified') famIdx(s.famName); });
+  famIdx('Unclassified');
+  fams = famNames;
+  styles = order.map(function(s){return {name:s.name, fam:famIdx(s.famName), desc:s.desc, l:s.l, d:s.d};});
+  U = styles.length-1;
+  var nameIdx = {}; order.forEach(function(s,i){nameIdx[s.name.toLowerCase()] = i;});
+
+  tracks = raw.map(function(t){return {i:t.i, t:t.t, a:t.a, al:t.al, p:t.p, s:nameIdx[t.sty.name.toLowerCase()], c:t.c, v:t.v, src:t.src, sw:t.sw};});
+
+  trackUnits = tracks.map(function(t){return {s:t.s, guess:t.c===2, n:1, name:t.t, track:t};});
+  byArtist = {};
+  tracks.forEach(function(t){(byArtist[t.p] = byArtist[t.p] || []).push(t);});
+  artistUnits = Object.keys(byArtist).map(function(name){
+    var ts = byArtist[name], c = {}, best = null;
+    ts.forEach(function(t){c[t.s]=(c[t.s]||0)+1; if(best===null||c[t.s]>c[best]) best=t.s;});
+    var inBest = ts.filter(function(t){return t.s===best;});
+    var guesses = inBest.filter(function(t){return t.c===2;}).length;
+    return {s:best, guess:guesses*2>=inBest.length && best!==U, n:ts.length, name:name, tracks:ts};
+  });
+  countsT = tally(trackUnits); countsA = tally(artistUnits);
+
+  var seen = {}, dupes = 0;
+  tracks.forEach(function(t){var k = norm(t.t)+'||'+norm(t.a); if(seen[k]) dupes++; seen[k] = 1;});
+  meta = {dupes:dupes, swapped:tracks.filter(function(t){return t.sw;}).length,
+          inferred:tracks.filter(function(t){return t.src==='track'||t.src==='artist';}).length,
+          unclassified:tracks.filter(function(t){return t.s===U;}).length};
+  writeTokens();
+}
+function writeTokens(){
+  var L = styles.map(function(s,i){return '--s'+i+':'+s.l;}).join(';');
+  var D = styles.map(function(s,i){return '--s'+i+':'+s.d;}).join(';');
+  var el = $('tokens');
+  if(!el){el = document.createElement('style'); el.id = 'tokens'; document.head.appendChild(el);}
+  el.textContent = ':root{'+L+'}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){'+D+'}}:root[data-theme="dark"]{'+D+'}';
+}
+function tally(units){var a = styles.map(function(){return 0;}); units.forEach(function(u){a[u.s]++;}); return a;}
+function classified(counts){return counts.map(function(n,i){return i===U ? 0 : n;});}
+function diversity(counts){
+  var N=0,H=0,S=0; counts.forEach(function(n){N+=n;});
+  counts.forEach(function(n){if(n>0){S++; var p=n/N; H-=p*Math.log(p);}});
+  return {N:N,S:S,eff:Math.exp(H)};
+}
+function unitWord(){return state.unit==='tracks'?'tracks':'artists';}
+function counts(){return state.unit==='tracks'?countsT:countsA;}
+
+/* ================= header, metrics ================= */
+function renderHeader(){
+  var c = counts(), total = c.reduce(function(a,b){return a+b;},0), d = diversity(classified(c));
+  $('h1').textContent = total + ' ' + unitWord() + ', ' + d.S + ' styles';
+  $('lede').textContent = state.unit==='tracks'
+    ? 'Every track in your playlist, sorted by musical style. Each square is one track. Hover or tap a square for details, and pick a style to isolate it.'
+    : 'Every artist in your playlist, filed under the style most of their tracks fall in. Each square is one artist. Hover or tap a square for details, and pick a style to isolate it.';
+  $('wallh').textContent = state.unit==='tracks' ? 'Every track, grouped by style' : 'Every artist, grouped by style';
+  document.querySelectorAll('.seg button').forEach(function(b){b.setAttribute('aria-pressed', String(b.dataset.unit===state.unit));});
+}
+function topArtist(){
+  var best = null; Object.keys(byArtist).forEach(function(k){ if(!best || byArtist[k].length>byArtist[best].length) best=k; });
+  return {name:best, n:byArtist[best].length};
+}
+function renderMetrics(){
+  var c = classified(counts()), d = diversity(c), top = c.indexOf(Math.max.apply(null,c));
+  var famsUsed = {}; styles.forEach(function(s,i){if(c[i]>0) famsUsed[s.fam]=1;});
+  var edits = tracks.filter(function(t){return t.v==='Sped up'||t.v==='Slowed';}).length;
+  $('metrics').innerHTML =
+    '<div class="m"><b>'+d.S+'</b><span>styles across '+Object.keys(famsUsed).length+' famil'+(Object.keys(famsUsed).length===1?'y':'ies')+'</span></div>'+
+    '<div class="m"><b>'+d.eff.toFixed(1)+'</b><span>effective styles: how many equal-sized styles would spread the playlist as evenly</span></div>'+
+    '<div class="m"><b>'+pct(c[top],d.N)+'%</b><span>'+esc(styles[top].name)+', the largest style</span></div>'+
+    '<div class="m"><b>'+edits+'</b><span>tracks are sped-up or slowed edits</span></div>';
+  var dT = diversity(classified(countsT)), dA = diversity(classified(countsA)), ta = topArtist();
+  $('insight').textContent = state.unit==='tracks'
+    ? 'Counting each artist once instead of each track '+(dA.eff>=dT.eff?'lifts':'lowers')+' the effective number of styles from '+dT.eff.toFixed(1)+' to '+dA.eff.toFixed(1)+'. '+ta.name+' alone supplies '+ta.n+' of the '+tracks.length+' tracks.'
+    : 'Counting every track instead of each artist once '+(dT.eff>=dA.eff?'lifts':'lowers')+' the effective number of styles from '+dA.eff.toFixed(1)+' to '+dT.eff.toFixed(1)+'. '+ta.name+' alone supplies '+ta.n+' of the '+tracks.length+' tracks.';
+}
+function renderNotice(){
+  var n = $('notice');
+  if(meta.unclassified>0){
+    $('noticeTxt').textContent = meta.unclassified+' track'+(meta.unclassified===1?' has':'s have')+' no style yet and '+(meta.unclassified===1?'shows':'show')+' in grey, outside the diversity measures. Add a Style for them in '+DATA_FILE+'.';
+    $('noticeBtn').hidden = false; n.hidden = false;
+  } else if(meta.inferred>0){
+    $('noticeTxt').textContent = meta.inferred+' track'+(meta.inferred===1?' has':'s have')+' no Style in the file, so the style was matched from artists already known. Fill in the Style column to make it official.';
+    $('noticeBtn').hidden = true; n.hidden = false;
+  } else n.hidden = true;
+}
+
+/* ================= family ordering shared by spectrum and wall ================= */
+function famOrder(){
+  var c = counts();
+  var arr = fams.map(function(f,fi){
+    var sts = [], n = 0;
+    styles.forEach(function(s,si){ if(s.fam===fi && c[si]>0){sts.push(si); n+=c[si];} });
+    sts.sort(function(a,b){return c[b]-c[a];});
+    return {fi:fi, n:n, styles:sts};
+  }).filter(function(f){return f.n>0;});
+  var uf = styles[U].fam;
+  arr.sort(function(a,b){ if(a.fi===uf) return 1; if(b.fi===uf) return -1; return b.n-a.n; });
+  return arr;
+}
+
+/* ================= spectrum ================= */
+function renderSpectrum(){
+  var c = counts(), N = c.reduce(function(a,b){return a+b;},0), fo = famOrder();
+  $('spectrum').innerHTML = fo.map(function(f){
+    return '<div class="fgroup" style="flex:'+f.n+' 1 0">'+f.styles.map(function(si){
+      return '<button type="button" class="sseg" data-s="'+si+'" style="flex:'+c[si]+' 1 0;--c:var(--s'+si+')" aria-label="'+esc(styles[si].name)+': '+c[si]+' '+unitWord()+'"></button>';
+    }).join('')+'</div>';
+  }).join('');
+  $('fleg').innerHTML = fo.map(function(f){
+    return '<button type="button" class="fitem" data-f="'+f.fi+'" aria-pressed="'+(state.fam===f.fi)+'"><span class="fsw" style="--c:var(--s'+f.styles[0]+')"></span>'+esc(fams[f.fi])+' <em>'+pctS(f.n,N)+'%</em></button>';
+  }).join('');
+}
+
+/* ================= wall ================= */
+function renderWall(first){
+  cur = state.unit==='tracks' ? trackUnits : artistUnits;
+  var c = counts(), N = c.reduce(function(a,b){return a+b;},0), fo = famOrder();
+  var per = styles.map(function(){return [];});
+  cur.forEach(function(u,idx){u.idx = idx; per[u.s].push(u);});
+  var html = '', k = 0;
+  fo.forEach(function(f){
+    html += '<section class="frow"><div class="fhead"><h3>'+esc(fams[f.fi])+'</h3><p>'+f.n+' '+unitWord()+' ('+pctS(f.n,N)+'%)</p></div><div class="clusters">';
+    f.styles.forEach(function(si){
+      var arr = per[si].slice();
+      if(state.unit==='tracks') arr.sort(function(a,b){return a.track.p<b.track.p?-1:a.track.p>b.track.p?1:a.track.i-b.track.i;});
+      else arr.sort(function(a,b){return b.n-a.n || (a.name<b.name?-1:1);});
+      var cols = Math.min(arr.length, Math.max(2, Math.ceil(Math.sqrt(arr.length)*1.7)));
+      html += '<div class="cluster" data-s="'+si+'"><button type="button" class="clabel" data-s="'+si+'">'+esc(styles[si].name)+'<span>'+arr.length+'</span></button><div class="tiles" aria-hidden="true" style="--cols:'+cols+'">';
+      arr.forEach(function(u,ti){
+        var d = first && !reduce ? Math.min(k*55+ti*4, 2600) : 0;
+        html += '<i class="tile'+(u.guess?' guess':'')+'" data-s="'+si+'" data-n="'+u.idx+'" style="--c:var(--s'+si+');--d:'+d+'ms"></i>';
+      });
+      html += '</div></div>'; k++;
+    });
+    html += '</div></section>';
+  });
+  var wall = $('wall');
+  wall.innerHTML = html;
+  if(first && !reduce){
+    wall.classList.remove('on');
+    requestAnimationFrame(function(){requestAnimationFrame(function(){wall.classList.add('on');});});
+  } else wall.classList.add('on');
+  applyDim();
+}
+function applyDim(){
+  var filtering = state.style!==null || state.fam!==null;
+  function match(si){return (state.style===null || state.style===si) && (state.fam===null || styles[si].fam===state.fam);}
+  $('wall').classList.toggle('filtering', filtering);
+  $('spectrum').classList.toggle('filtering', filtering);
+  document.querySelectorAll('.cluster').forEach(function(el){el.classList.toggle('match', match(+el.dataset.s));});
+  document.querySelectorAll('.sseg').forEach(function(el){el.classList.toggle('match', match(+el.dataset.s));});
+  document.querySelectorAll('.fitem').forEach(function(el){el.setAttribute('aria-pressed', String(state.fam===+el.dataset.f));});
+}
+
+/* ================= tooltip ================= */
+var tip = $('tip');
+function showTip(html, x, y){
+  tip.innerHTML = html; tip.hidden = false;
+  var r = tip.getBoundingClientRect(), pad = 14, l = x+pad, t = y+pad;
+  if(l+r.width > window.innerWidth-8) l = x-r.width-pad;
+  if(t+r.height > window.innerHeight-8) t = y-r.height-pad;
+  tip.style.left = Math.max(8,l)+'px'; tip.style.top = Math.max(8,t)+'px';
+}
+function hideTip(){tip.hidden = true;}
+function certLabel(t){return CONF[t.c] + ((t.src==='track'||t.src==='artist') ? ' (inferred)' : '');}
+function tileHtml(el){
+  var u = cur[+el.dataset.n]; if(!u) return '';
+  var st = styles[u.s], sw = '<div class="tl" style="--c:var(--s'+u.s+')"><i></i>'+esc(st.name)+'</div>';
+  if(state.unit==='tracks'){
+    var t = u.track;
+    return '<strong>'+esc(t.t)+'</strong><br>'+esc(t.a)+'<br><span class="tm">'+esc(t.al)+'</span>'+sw+
+      '<span class="tm">'+certLabel(t)+(t.v!=='Original'?', '+t.v.toLowerCase():'')+'</span>';
+  }
+  var titles = u.tracks.slice(0,3).map(function(t){return t.t;}).join(', ') + (u.n>3?'…':'');
+  return '<strong>'+esc(u.name)+'</strong><br>'+u.n+' track'+(u.n>1?'s':'')+sw+'<span class="tm">'+esc(titles)+'</span>';
+}
+function segHtml(si){
+  var c = counts(), N = c.reduce(function(a,b){return a+b;},0), st = styles[si];
+  return '<strong>'+esc(st.name)+'</strong><br><span class="tm">'+esc(fams[st.fam])+'</span><div class="tl" style="--c:var(--s'+si+')"><i></i>'+c[si]+' '+unitWord()+' ('+pctS(c[si],N)+'%)</div>';
+}
+
+/* ================= selection ================= */
+function setStyle(si){state.style = si; state.fam = null; state.shown = 60; refreshSelection();}
+function toggleStyle(si){setStyle(state.style===si ? null : si);}
+function toggleFam(fi){state.fam = state.fam===fi ? null : fi; state.style = null; state.shown = 60; refreshSelection();}
+function refreshSelection(){applyDim(); renderTray(); syncFilters(); renderTable();}
+
+function renderTray(){
+  var tray = $('tray');
+  if(state.style===null){tray.hidden = true; document.body.classList.remove('has-tray'); return;}
+  var si = state.style, st = styles[si];
+  var ts = tracks.filter(function(t){return t.s===si;});
+  var aus = artistUnits.filter(function(u){return u.s===si;});
+  var guesses = ts.filter(function(t){return t.c===2;}).length;
+  var cnt = {}; ts.forEach(function(t){cnt[t.p]=(cnt[t.p]||0)+1;});
+  var top = Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a] || (a<b?-1:1);}).slice(0,6);
+  $('tsw').style.setProperty('--c','var(--s'+si+')');
+  $('tname').textContent = st.name;
+  $('tdesc').textContent = (fams[st.fam] + (st.desc ? '. '+st.desc : ''));
+  $('tstats').textContent = ts.length+' track'+(ts.length===1?'':'s')+' ('+pct(ts.length,tracks.length)+'% of the playlist) by '+aus.length+' artist'+(aus.length===1?'':'s')+
+    (guesses? ', '+guesses+' filed as best guesses':'')+'.';
+  $('tchips').innerHTML = top.map(function(a){return '<span class="chip">'+esc(a)+'<b>'+cnt[a]+'</b></span>';}).join('');
+  tray.hidden = false; document.body.classList.add('has-tray');
+}
+
+/* ================= explorer ================= */
+function buildFilters(){
+  var c = countsT;
+  var famHas = {}; styles.forEach(function(s,i){if(c[i]>0) famHas[s.fam]=1;});
+  $('fFam').innerHTML = '<option value="all">All families</option>'+fams.map(function(f,i){return famHas[i]?'<option value="'+i+'">'+esc(f)+'</option>':'';}).join('');
+  var so = '<option value="all">All styles</option>';
+  fams.forEach(function(f,fi){
+    if(!famHas[fi]) return;
+    so += '<optgroup label="'+esc(f)+'">'+styles.map(function(s,si){return (s.fam===fi && c[si]>0)?'<option value="'+si+'">'+esc(s.name)+'</option>':'';}).join('')+'</optgroup>';
+  });
+  $('fSty').innerHTML = so;
+  $('fVer').innerHTML = '<option value="all">All versions</option>'+VERS.map(function(v){return '<option>'+v+'</option>';}).join('');
+  $('fConf').innerHTML = '<option value="all">Any certainty</option>'+CONF.map(function(c,i){return '<option value="'+i+'">'+c+'</option>';}).join('');
+  $('fVer').value = state.ver; $('fConf').value = state.conf;
+}
+function syncFilters(){
+  $('fFam').value = state.fam===null ? 'all' : String(state.fam);
+  $('fSty').value = state.style===null ? 'all' : String(state.style);
+}
+function filtered(){
+  var q = state.q.trim().toLowerCase();
+  var rows = tracks.filter(function(t){
+    return (state.style===null || t.s===state.style) && (state.fam===null || styles[t.s].fam===state.fam) &&
+      (state.ver==='all' || t.v===state.ver) && (state.conf==='all' || t.c===+state.conf) &&
+      (!q || (t.t+' '+t.a+' '+t.al).toLowerCase().indexOf(q)>-1);
+  });
+  if(state.sortKey){
+    var k = state.sortKey, dir = state.sortDir;
+    var val = function(t){return k==='s' ? styles[t.s].name : k==='c' ? t.c : k==='v' ? t.v : k==='a' ? t.a.toLowerCase() : t.t.toLowerCase();};
+    rows = rows.slice().sort(function(x,y){var a=val(x), b=val(y); return (a<b?-1:a>b?1:x.i-y.i)*dir;});
+  }
+  return rows;
+}
+var COLS = [['i','#','hide-s'],['t','Title',''],['a','Artist',''],['s','Style',''],['v','Version','hide-s'],['c','Certainty','']];
+function renderHead(){
+  $('thead').innerHTML = COLS.map(function(c){
+    var active = state.sortKey===c[0], arrow = active ? (state.sortDir===1?' ↑':' ↓') : '';
+    var aria = active ? (state.sortDir===1?'ascending':'descending') : 'none';
+    var inner = c[0]==='i' ? c[1] : '<button type="button" data-k="'+c[0]+'">'+c[1]+arrow+'</button>';
+    return '<th class="'+c[2]+'" aria-sort="'+aria+'">'+inner+'</th>';
+  }).join('');
+}
+function renderTable(){
+  var rows = filtered(), shown = rows.slice(0, state.shown);
+  $('count').textContent = rows.length===tracks.length ? 'All '+rows.length+' tracks' : rows.length+' of '+tracks.length+' tracks match';
+  $('tbody').innerHTML = shown.length ? shown.map(function(t){
+    return '<tr><td class="num hide-s">'+(t.i+1)+'</td><td class="ttl" title="'+esc(t.t)+'">'+esc(t.t)+'</td><td class="art" title="'+esc(t.a)+'">'+esc(t.a)+'</td>'+
+      '<td class="sty"><span class="sw'+(t.c===2?' guess':'')+'" style="--c:var(--s'+t.s+')"></span>'+esc(styles[t.s].name)+'</td>'+
+      '<td class="hide-s">'+t.v+'</td><td class="cert">'+certLabel(t)+'</td></tr>';
+  }).join('') : '<tr><td colspan="6" class="empty">No tracks match these filters. Clear the search or pick another style.</td></tr>';
+  $('more').innerHTML = rows.length>shown.length ? '<button type="button" class="btn" id="moreBtn">Show '+Math.min(60, rows.length-shown.length)+' more</button>' : '';
+}
+
+/* ================= about ================= */
+function renderAbout(){
+  var c = [0,0,0,0]; tracks.forEach(function(t){c[t.c]++;});
+  $('ab1').textContent = 'Every number here is computed in your browser from '+DATA_FILE+', the Excel file next to this page. Each track has one Style. '+
+    c[0]+' are marked confident, '+c[1]+' likely and '+c[2]+' best guesses (hollow squares).'+
+    (meta.inferred? ' '+meta.inferred+' had no Style in the file and were matched from artists already known.' : '');
+  $('ab2').textContent = 'Remixes are filed by how they sound, and sped-up or slowed edits stay with the style of the song underneath. When you count artists, each one appears once, in the style where most of their tracks fall, and a collaboration counts for the first credited artist.';
+  $('ab3').textContent = 'Change a Style, add rows or add a new style in the Styles sheet, then replace the file on GitHub. This page checks for a new version every '+Math.round(POLL_MS/1000)+' seconds and redraws itself.'+
+    (meta.dupes? ' '+meta.dupes+' rows repeat a track already in the list and are counted each time.' : '')+
+    (meta.swapped? ' '+meta.swapped+' rows had artist and album swapped and were corrected.' : '');
+}
+
+/* ================= loading ================= */
+var source = 'site', lastHash = null, lastChange = null, lastCheck = null;
+function clock(d){return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});}
+function hashBuf(buf){var h = 2166136261, a = new Uint8Array(buf); for(var i=0;i<a.length;i++){h ^= a[i]; h = Math.imul(h,16777619);} return (h>>>0)+':'+a.length;}
+function setStatus(){
+  var s = $('status');
+  if(source!=='site') s.textContent = 'Preview of ' + source + ': ' + tracks.length + ' tracks. Reload to go back to ' + DATA_FILE + '.';
+  else s.textContent = DATA_FILE + ': ' + tracks.length + ' tracks. Checked ' + clock(lastCheck) + (lastChange ? ', last change ' + clock(lastChange) : '') + '.';
+}
+function showGate(msg){
+  $('app').hidden = true; $('gate').hidden = false; $('gateMsg').innerHTML = msg;
+  $('tray').hidden = true; document.body.classList.remove('has-tray');
+}
+function apply(buf, first){
+  if(typeof XLSX==='undefined') throw new Error('The Excel reader (vendor/xlsx.mini.min.js) did not load.');
+  var wb = XLSX.read(buf, {type:'array'}), parsed = parseWorkbook(wb);
+  if(!parsed.rows.length) throw new Error('No tracks found in the first sheet.');
+  var prevStyle = state.style!==null && styles[state.style] ? styles[state.style].name : null;
+  var prevFam = state.fam!==null && fams[state.fam] ? fams[state.fam] : null;
+  ingest(parsed);
+  state.style = null; state.fam = null;
+  if(prevStyle){ for(var i=0;i<styles.length;i++) if(styles[i].name===prevStyle && countsT[i]>0) state.style = i; }
+  else if(prevFam){ var fi = fams.indexOf(prevFam); if(fi>-1) state.fam = fi; }
+  state.shown = Math.max(60, state.shown);
+  $('gate').hidden = true; $('app').hidden = false;
+  renderAbout(); buildFilters(); renderHead(); renderAll(first); syncFilters(); renderTable();
+}
+function renderAll(first){renderHeader(); renderNotice(); renderSpectrum(); renderMetrics(); renderWall(first); renderTray();}
+
+var firstDraw = true;
+function fetchData(manual){
+  source = 'site';
+  var url = DATA_FILE + (DATA_FILE.indexOf('?')>-1 ? '&' : '?') + 't=' + Date.now();
+  return fetch(url, {cache:'no-store'}).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.arrayBuffer();
+  }).then(function(buf){
+    lastCheck = new Date();
+    var h = hashBuf(buf);
+    if(h===lastHash && !manual){ setStatus(); return; }
+    var changed = lastHash!==null && h!==lastHash;
+    lastHash = h;
+    try{ apply(buf, firstDraw); } catch(e){ e.isParse = true; throw e; }
+    firstDraw = false;
+    if(changed || lastChange===null) lastChange = lastCheck;
+    setStatus();
+  }).catch(function(err){
+    if(tracks.length){
+      $('status').textContent = err.isParse
+        ? 'The latest '+DATA_FILE+' has a problem ('+err.message+'). Showing the last data I could read.'
+        : 'Could not reach '+DATA_FILE+' at '+clock(new Date())+'. Showing the last data I have.';
+      return;
+    }
+    if(err.isParse){ showGate('Could not read <code>'+esc(DATA_FILE)+'</code>: '+esc(err.message)); $('status').textContent = 'No data loaded.'; return; }
+    var local = location.protocol==='file:';
+    showGate((local
+      ? 'Browsers block a page opened from your disk from reading files next to it. Open the Excel file below, or serve this folder (for example with <code>python -m http.server</code>) or publish it on GitHub Pages.'
+      : 'Could not load <code>'+esc(DATA_FILE)+'</code> ('+esc(err.message)+'). Check that the file sits next to <code>index.html</code>, or open a file from your computer.'));
+    $('status').textContent = 'No data loaded.';
+  });
+}
+function openLocal(file){
+  var fr = new FileReader();
+  fr.onload = function(){
+    try{
+      source = file.name; apply(fr.result, firstDraw); firstDraw = false; lastHash = null; setStatus();
+    } catch(err){ $('status').textContent = 'Could not read '+file.name+': '+err.message; if(!tracks.length) showGate('Could not read <code>'+esc(file.name)+'</code>: '+esc(err.message)); }
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+/* ================= events ================= */
+function wire(){
+  document.querySelectorAll('.seg button').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(state.unit===b.dataset.unit) return;
+      state.unit = b.dataset.unit; hideTip(); renderAll(false);
+    });
+  });
+  var wall = $('wall');
+  wall.addEventListener('pointermove', function(e){
+    var tile = e.target.closest('.tile');
+    if(tile && e.pointerType!=='touch') showTip(tileHtml(tile), e.clientX, e.clientY); else if(!tile) hideTip();
+  });
+  wall.addEventListener('pointerleave', hideTip);
+  wall.addEventListener('click', function(e){
+    var tile = e.target.closest('.tile'), lab = e.target.closest('.clabel');
+    if(lab){toggleStyle(+lab.dataset.s); return;}
+    if(tile){
+      if(state.style!==+tile.dataset.s) setStyle(+tile.dataset.s);
+      var r = tile.getBoundingClientRect(); showTip(tileHtml(tile), r.left, r.bottom);
+      e.stopPropagation();
+    }
+  });
+  document.addEventListener('click', function(e){if(!e.target.closest('.tile')) hideTip();});
+  var sp = $('spectrum');
+  sp.addEventListener('pointermove', function(e){var s = e.target.closest('.sseg'); if(s) showTip(segHtml(+s.dataset.s), e.clientX, e.clientY); else hideTip();});
+  sp.addEventListener('pointerleave', hideTip);
+  sp.addEventListener('click', function(e){var s = e.target.closest('.sseg'); if(s) toggleStyle(+s.dataset.s);});
+  sp.addEventListener('focusin', function(e){var s = e.target.closest('.sseg'); if(s){var r = s.getBoundingClientRect(); showTip(segHtml(+s.dataset.s), r.left, r.bottom);}});
+  sp.addEventListener('focusout', hideTip);
+  $('fleg').addEventListener('click', function(e){var f = e.target.closest('.fitem'); if(f) toggleFam(+f.dataset.f);});
+  $('noticeBtn').addEventListener('click', function(){setStyle(U);});
+
+  $('q').addEventListener('input', function(e){state.q = e.target.value; state.shown = 60; renderTable();});
+  $('fFam').addEventListener('change', function(e){var v = e.target.value; state.fam = v==='all'?null:+v; state.style = null; state.shown = 60; refreshSelection();});
+  $('fSty').addEventListener('change', function(e){var v = e.target.value; state.style = v==='all'?null:+v; state.fam = null; state.shown = 60; refreshSelection();});
+  $('fVer').addEventListener('change', function(e){state.ver = e.target.value; state.shown = 60; renderTable();});
+  $('fConf').addEventListener('change', function(e){state.conf = e.target.value; state.shown = 60; renderTable();});
+  $('thead').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    var k = b.dataset.k;
+    if(state.sortKey!==k){state.sortKey = k; state.sortDir = 1;}
+    else if(state.sortDir===1){state.sortDir = -1;}
+    else {state.sortKey = null; state.sortDir = 1;}
+    renderHead(); renderTable();
+  });
+  $('more').addEventListener('click', function(e){if(e.target.id==='moreBtn'){state.shown += 60; renderTable();}});
+  $('tclear').addEventListener('click', function(){setStyle(null);});
+  $('tgo').addEventListener('click', function(){$('explorer').scrollIntoView({behavior: reduce?'auto':'smooth', block:'start'});});
+  document.addEventListener('keydown', function(e){if(e.key==='Escape'){hideTip(); if(state.style!==null||state.fam!==null){state.style=null; state.fam=null; refreshSelection();}}});
+  window.addEventListener('resize', hideTip);
+  window.addEventListener('scroll', hideTip, {passive:true});
+
+  // data source controls
+  $('reload').addEventListener('click', function(){$('status').textContent = 'Reloading…'; fetchData(true);});
+  var pick = function(){$('fileIn').click();};
+  $('openFile').addEventListener('click', pick); $('gateOpen').addEventListener('click', pick);
+  $('fileIn').addEventListener('change', function(e){if(e.target.files[0]) openLocal(e.target.files[0]); e.target.value = '';});
+  var drag = 0;
+  window.addEventListener('dragenter', function(e){e.preventDefault(); drag++; document.body.classList.add('dragging');});
+  window.addEventListener('dragover', function(e){e.preventDefault();});
+  window.addEventListener('dragleave', function(){drag = Math.max(0,drag-1); if(!drag) document.body.classList.remove('dragging');});
+  window.addEventListener('drop', function(e){e.preventDefault(); drag = 0; document.body.classList.remove('dragging'); var f = e.dataTransfer.files[0]; if(f) openLocal(f);});
+  // poll for a new version while the tab is visible
+  setInterval(function(){ if(source==='site' && !document.hidden && tracks.length) fetchData(false); }, POLL_MS);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && source==='site' && tracks.length) fetchData(false); });
+}
+
+wire();
+fetchData(true);
+})();
+</script>
+</body>
+</html>
